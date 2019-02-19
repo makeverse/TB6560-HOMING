@@ -1,0 +1,96 @@
+const int STEP_PIN = 3;
+const int Enable_PIN = 8;
+const int DIR_PIN = 6;
+const int inLed = 13;
+const int lSwitch = 11;
+
+int curPosition = 0;
+
+
+void setup()
+{
+   pinMode(STEP_PIN, OUTPUT);
+   pinMode(Enable_PIN, OUTPUT);
+   pinMode(DIR_PIN, OUTPUT);
+   pinMode(inLed, OUTPUT);
+   pinMode(lSwitch, INPUT);
+   digitalWrite(STEP_PIN, LOW);
+   digitalWrite(Enable_PIN, HIGH); //When device turned on,
+                                   //stepper is off
+   digitalWrite(DIR_PIN, HIGH);
+
+   homing();
+ 
+}
+ 
+void loop(){
+
+  moveUntil(1000, 300, 0);
+  delay(1000);
+  moveUntil(1200, 400, 0);
+  delay(1000);
+  moveUntil(0, 500, 0);
+  delay(1000);
+}
+
+void moveUntil(int x, int velocity, int acceleration){
+
+  int stepsToGo; 
+  
+  stepsToGo = x - curPosition;
+
+  moveBy(stepsToGo, velocity, acceleration);
+ 
+  curPosition = x;
+  
+}
+
+void moveBy(int steps, int velocity, int acceleration) {
+
+  // this is 
+  
+  if (!acceleration) {
+    acceleration = 0;
+  }
+  
+  curPosition = curPosition + steps;
+  
+  if (steps >= 0){
+    digitalWrite(Enable_PIN, LOW);
+    digitalWrite(DIR_PIN, LOW);    
+  } else {
+    digitalWrite(Enable_PIN, LOW);
+    digitalWrite(DIR_PIN, HIGH);
+    steps = abs(steps);    
+  }
+  
+  for (int i = 0; i < steps; i++){
+    digitalWrite(STEP_PIN, HIGH);
+    digitalWrite(inLed, HIGH);
+    delayMicroseconds(velocity);
+    digitalWrite(STEP_PIN, LOW);
+    digitalWrite(inLed, LOW);
+    delayMicroseconds(velocity);
+  }
+  digitalWrite(Enable_PIN, HIGH);
+}
+
+
+void homing() {
+
+  int homingVelocity = 5000;
+  while (digitalRead(lSwitch)) {        // while the limit switch is not pressed the routine goes
+    moveBy(-1, homingVelocity, 0);                   // moving backwards very slowly in order to find the limit switch
+  }
+  delay(1000);
+  
+  while (!digitalRead(lSwitch)) {        // while the limit switch is not pressed the routine goes
+    moveBy(1, homingVelocity, 0);                   // moving backwards very slowly in order to find the limit switch
+  }
+  curPosition = 0;
+  moveBy(10, homingVelocity, 0);
+  delay(5000);
+  
+}
+  
+
